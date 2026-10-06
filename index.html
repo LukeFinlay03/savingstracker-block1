@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Block 1 Savings Tracker</title>
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #f4f6f8; --card: #ffffff; --text: #1b2430; --muted: #5a6877; --line: #e1e6ec;
+  --accent: #1d7a5b; --accent-soft: #e2f3ec; --accent-text: #ffffff;
+  --warn: #a9530a; --warn-soft: #fdeedd; --bad: #b0271f; --bad-soft: #fbe5e3;
+  --track: #e4eaf0; --input: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1319; --card: #161d25; --text: #e7ecf1; --muted: #98a5b3; --line: #262f3b;
+    --accent: #47c49a; --accent-soft: #11302a; --accent-text: #0a1a14;
+    --warn: #f0a55c; --warn-soft: #3a2713; --bad: #ff8b82; --bad-soft: #3b1c1a;
+    --track: #26303c; --input: #0f151b;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1319; --card: #161d25; --text: #e7ecf1; --muted: #98a5b3; --line: #262f3b;
+  --accent: #47c49a; --accent-soft: #11302a; --accent-text: #0a1a14;
+  --warn: #f0a55c; --warn-soft: #3a2713; --bad: #ff8b82; --bad-soft: #3b1c1a;
+  --track: #26303c; --input: #0f151b;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px; line-height: 1.45;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+h1 { font-size: 22px; margin: 4px 0 2px; }
+h2 { font-size: 16px; margin: 0 0 12px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.hero-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.big { font-size: 34px; font-weight: 700; line-height: 1.1; }
+.big2 { font-size: 22px; font-weight: 600; text-align: right; }
+.bar { height: 14px; background: var(--track); border-radius: 999px; overflow: hidden; margin: 14px 0 8px; }
+.fill { height: 100%; width: 0%; background: var(--accent); border-radius: 999px; transition: width .35s ease; }
+.hero-bottom { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; gap: 8px; flex-wrap: wrap; }
+.status { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-weight: 500; background: var(--accent-soft); color: var(--text); }
+.status.warn { background: var(--warn-soft); }
+.status.bad { background: var(--bad-soft); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { background: var(--bg); border-radius: 10px; padding: 10px 12px; }
+.stat .v { font-size: 18px; font-weight: 650; }
+.stat .l { font-size: 12px; color: var(--muted); }
+label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+input[type="number"], input[type="date"], input[type="text"] {
+  width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px;
+  background: var(--input); color: var(--text); font-size: 15px; font-family: inherit;
+}
+input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.seg { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+button { font-family: inherit; font-size: 14px; cursor: pointer; }
+.seg button, .chip {
+  border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  padding: 8px 12px; border-radius: 999px;
+}
+.seg button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.primary { background: var(--accent); color: var(--accent-text); border: 0; padding: 10px 16px; border-radius: 10px; font-weight: 600; }
+.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 6px 10px; border-radius: 8px; }
+.ghost.arm { color: var(--bad); border-color: var(--bad); }
+.chips { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
+.formula { background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-top: 4px; font-size: 14px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.list li:first-child { border-top: 0; }
+.list .d { color: var(--muted); font-size: 13px; min-width: 88px; }
+.list .n { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.list .a { font-weight: 600; }
+.empty { color: var(--muted); padding: 6px 0; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-top: 0; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--accent-soft); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.foot { color: var(--muted); font-size: 12.5px; }
+.foot p { margin: 6px 0; }
+.cd { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.cd .big { font-size: 38px; }
+.cd-detail { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.cd-dates { color: var(--muted); font-size: 13px; text-align: right; }
+.cd-dates strong { color: var(--text); }
+.linkbtn { background: none; border: 0; color: var(--accent); padding: 0; text-decoration: underline; font-size: 13px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="topbar">
+    <h1>Block 1 savings tracker</h1>
+  </div>
+  <p class="sub">Your own share of the first trip: New Zealand, Cook Islands, Kazakhstan, Kyrgyzstan, Japan. All amounts in AUD.</p>
+
+  <section class="card" aria-live="polite">
+    <div class="cd">
+      <div>
+        <div class="label">Countdown to departure</div>
+        <div class="big" id="cd-big">-</div>
+        <div class="cd-detail" id="cd-detail"></div>
+      </div>
+      <div class="cd-dates">
+        <div>Today: <strong id="cd-today">-</strong></div>
+        <div>Departure: <strong id="cd-dep">-</strong></div>
+        <div id="cd-src"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="hero-top">
+      <div><div class="label">Saved so far</div><div class="big" id="saved">$0</div></div>
+      <div><div class="label" style="text-align:right">Your target</div><div class="big2" id="target">$0</div></div>
+    </div>
+    <div class="bar" role="progressbar" id="bar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Savings progress"><div class="fill" id="fill"></div></div>
+    <div class="hero-bottom"><span id="pct">0% saved</span><span id="remaining"></span></div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section class="card">
+    <h2>Add a deposit</h2>
+    <div class="row">
+      <div><label for="amt">Amount ($)</label><input type="number" id="amt" min="0" step="1" inputmode="decimal" placeholder="e.g. 150"></div>
+      <div><label for="ddate">Date</label><input type="date" id="ddate"></div>
+      <div><label for="dnote">Note (optional)</label><input type="text" id="dnote" maxlength="80" placeholder="e.g. shifts this week"></div>
+    </div>
+    <div class="chips" aria-label="Quick amounts">
+      <button type="button" class="chip" data-q="50">+$50</button>
+      <button type="button" class="chip" data-q="100">+$100</button>
+      <button type="button" class="chip" data-q="250">+$250</button>
+      <button type="button" class="chip" data-q="500">+$500</button>
+    </div>
+    <button type="button" class="primary" id="add">Add deposit</button>
+    <div class="hint" id="adderr" role="alert"></div>
+  </section>
+
+  <section class="card">
+    <h2>Deposits</h2>
+    <ul class="list" id="deposits"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Your pace</h2>
+    <div class="grid">
+      <div class="stat"><div class="v" id="wleft">–</div><div class="l">weeks to departure</div></div>
+      <div class="stat"><div class="v" id="needwk">–</div><div class="l">needed per week</div></div>
+      <div class="stat"><div class="v" id="needmo">–</div><div class="l">needed per month</div></div>
+      <div class="stat"><div class="v" id="avgwk">–</div><div class="l">your average per week</div></div>
+      <div class="stat"><div class="v" id="projdate">–</div><div class="l">projected finish</div></div>
+      <div class="stat"><div class="v" id="projsave">–</div><div class="l">projected at departure</div></div>
+    </div>
+    <div class="hint" id="pacehint"></div>
+  </section>
+
+  <section class="card">
+    <h2>Savings plan options</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>If you save over</th><th class="num">Per week</th><th class="num">Per month</th></tr></thead>
+      <tbody id="plans"></tbody>
+    </table></div>
+    <div class="hint">Based on what's still left to save, starting today.</div>
+  </section>
+
+  <section class="card">
+    <h2>Your target</h2>
+    <div class="label" style="margin-bottom:6px">Block 1 cost scenario (per person)</div>
+    <div class="seg" id="scen">
+      <button type="button" data-s="low">Low $14,280</button>
+      <button type="button" data-s="mid">Mid $15,000</button>
+      <button type="button" data-s="high">High $15,750</button>
+    </div>
+    <div class="row">
+      <div><label for="cost">Block 1 cost ($)</label><input type="number" id="cost" min="0" step="50" inputmode="decimal"></div>
+      <div><label for="gear">Gear and extras ($)</label><input type="number" id="gear" min="0" step="50" inputmode="decimal"><div class="hint">Boots, rain jacket, tent hire, vaccinations. Earlier estimate $660-1,120.</div></div>
+      <div><label for="dad">Dad's contribution ($)</label><input type="number" id="dad" min="0" step="100" inputmode="decimal"><div class="hint">Includes the emergency reserve.</div></div>
+      <div><label for="reserve">Emergency reserve ($)</label><input type="number" id="reserve" min="0" step="100" inputmode="decimal"><div class="hint">Stays unspent. Not used for bookings.</div></div>
+      <div><label for="dep">Departure date</label><input type="date" id="dep"><div class="hint">Assumes an April start. Change it to your real date.</div></div>
+      <div><label for="todayov">Today's date (optional)</label><input type="date" id="todayov"><div class="hint">Leave empty to use your device clock. Set it only if the date at the top is wrong.</div></div>
+    </div>
+    <div class="formula" id="formula"></div>
+  </section>
+
+  <section class="card">
+    <h2>When the money is due</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Booking</th><th>Due about</th><th class="num">Amount</th><th class="num">Running total</th><th>Covered?</th></tr></thead>
+      <tbody id="miles"></tbody>
+    </table></div>
+    <div class="hint" id="milehint"></div>
+  </section>
+
+  <section class="foot">
+    <p id="store">Saved in this browser.</p>
+    <p>Plan figures come from the Block 1 master plan: about three quarters are real quotes, the rest are estimates. Nothing here is booked, and prices will move, so check each one in its booking window. "Covered?" counts your deposits plus dad's contribution minus the emergency reserve.</p>
+    <p><button type="button" class="ghost" id="reset">Reset everything</button></p>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var COSTS = { low: 14280, mid: 15000, high: 15750 };
+  var DEFAULTS = { scenario: "mid", blockCost: 15000, gear: 890, dad: 3900, reserve: 1400, departure: "2030-04-01", todayOverride: "", deposits: [] };
+  var MILESTONES = [
+    { name: "Milford Track huts (parent books, NZ$)", mb: 11, amt: 456 },
+    { name: "Flights (all eight)", mb: 6, amt: 4351 },
+    { name: "Mt Cook campsite and Mueller Hut", mb: 6, amt: 95 },
+    { name: "Song-Kul trek and Kel-Suu package", mb: 3, amt: 921 },
+    { name: "Insurance and eSIMs", mb: 1.5, amt: 975 },
+    { name: "Mt Fuji hut (book from NZ)", mb: 0.3, amt: 144 }
+  ];
+  var LS_KEY = "b1_savings_tracker_v1";
+
+  var state = clone(DEFAULTS);
+  var dbDoc = null;
+  var saveTimer = null, writing = false, dirty = false;
+  var pendingDel = null, delTimer = null;
+
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function $(id) { return document.getElementById(id); }
+  function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
+  var money = new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
+  function fmt(n) { return money.format(Math.round(n)); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function toISO(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parseISO(s) {
+    if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+  function getToday() { var o = parseISO(state.todayOverride); return o ? o : startOfDay(new Date()); }
+  function fmtLong(d) { return d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
+  function ymd(from, to) {
+    var y = to.getFullYear() - from.getFullYear();
+    var m = to.getMonth() - from.getMonth();
+    var d = to.getDate() - from.getDate();
+    if (d < 0) { m--; d += new Date(to.getFullYear(), to.getMonth(), 0).getDate(); }
+    if (m < 0) { y--; m += 12; }
+    return { y: y, m: m, d: d };
+  }
+  function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function fmtDate(d) { return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }); }
+  function uid() { return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function merge(base, incoming) {
+    var out = clone(base);
+    if (!incoming || typeof incoming !== "object") return out;
+    ["scenario", "departure", "todayOverride"].forEach(function (k) { if (typeof incoming[k] === "string") out[k] = incoming[k]; });
+    ["blockCost", "gear", "dad", "reserve"].forEach(function (k) { if (typeof incoming[k] === "number" && isFinite(incoming[k])) out[k] = incoming[k]; });
+    if (Array.isArray(incoming.deposits)) {
+      out.deposits = incoming.deposits.filter(function (d) { return d && typeof d.amount === "number" && typeof d.date === "string"; })
+        .map(function (d) { return { id: String(d.id || uid()), date: d.date, amount: d.amount, note: String(d.note || "").slice(0, 80) }; });
+    }
+    return out;
+  }
+
+  /* ---------- persistence ---------- */
+  function localLoad() { try { var s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function localSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+  function setStore(t) { $("store").textContent = t; }
+
+  function persist() {
+    dirty = true;
+    localSave();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 600);
+  }
+  function flush() {
+    if (!dbDoc || !dirty) return;
+    if (writing) { saveTimer = setTimeout(flush, 400); return; }
+    dirty = false; writing = true;
+    dbDoc.set(clone(state)).then(function () {
+      writing = false; setStore("Saved to your account. Private to you.");
+    }, function () {
+      writing = false; setStore("Saved in this browser only.");
+    });
+  }
+
+  async function attachDb() {
+    try {
+      var c = window.claude;
+      if (!c || typeof c.use !== "function") return;
+      var db = await c.use("db");
+      var user = await c.use("user");
+      if (!db || !user) return;
+      var id = await user.id();
+      if (!id) return;
+      dbDoc = db.doc("data/users/" + id + "/tracker");
+      var snap = await dbDoc.get();
+      if (snap.exists) {
+        state = merge(DEFAULTS, snap.data());
+        localSave();
+        syncInputs(true);
+        render();
+        setStore("Saved to your account. Private to you.");
+      } else {
+        dirty = true; flush();
+      }
+    } catch (e) { /* stay on local storage */ }
+  }
+
+  /* ---------- calculations ---------- */
+  function calc() {
+    var target = Math.max(0, num(state.blockCost) + num(state.gear) - num(state.dad));
+    var saved = state.deposits.reduce(function (a, d) { return a + num(d.amount); }, 0);
+    var remaining = Math.max(0, target - saved);
+    var pct = target > 0 ? Math.min(100, saved / target * 100) : 100;
+    var today = getToday();
+    var dep = parseISO(state.departure);
+    var daysLeft = dep ? Math.round((dep - today) / 86400000) : null;
+    var weeksLeft = daysLeft !== null && daysLeft > 0 ? daysLeft / 7 : 0;
+    var avg = null, weeksActive = 0;
+    if (state.deposits.length) {
+      var first = state.deposits.map(function (d) { return parseISO(d.date); }).filter(Boolean)
+        .reduce(function (m, d) { return !m || d < m ? d : m; }, null);
+      if (first) weeksActive = Math.max(0, (today - first) / 86400000 / 7);
+      if (weeksActive >= 4) avg = saved / weeksActive;
+    }
+    return { target: target, saved: saved, remaining: remaining, pct: pct, today: today, dep: dep, daysLeft: daysLeft, weeksLeft: weeksLeft, avg: avg, weeksActive: weeksActive };
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    var c = calc();
+    $("saved").textContent = fmt(c.saved);
+    $("target").textContent = fmt(c.target);
+    $("fill").style.width = c.pct.toFixed(1) + "%";
+    $("bar").setAttribute("aria-valuenow", String(Math.round(c.pct)));
+    $("pct").textContent = Math.round(c.pct) + "% saved";
+    $("remaining").textContent = c.remaining > 0 ? fmt(c.remaining) + " to go" : "Target reached";
+
+    // countdown
+    $("cd-today").textContent = fmtLong(c.today);
+    $("cd-dep").textContent = c.dep ? fmtLong(c.dep) : "not set";
+    var cdBig = $("cd-big"), cdDet = $("cd-detail");
+    if (!c.dep) { cdBig.textContent = "Set a date"; cdDet.textContent = ""; }
+    else if (c.daysLeft > 0) {
+      cdBig.textContent = plural(c.daysLeft, "day");
+      var p = ymd(c.today, c.dep), parts = [];
+      if (p.y) parts.push(plural(p.y, "year"));
+      if (p.m) parts.push(plural(p.m, "month"));
+      if (p.d || !parts.length) parts.push(plural(p.d, "day"));
+      cdDet.textContent = parts.join(", ") + "  |  " + plural(Math.floor(c.daysLeft / 7), "week") + " and " + plural(c.daysLeft % 7, "day");
+    } else if (c.daysLeft === 0) { cdBig.textContent = "Today"; cdDet.textContent = "Departure day."; }
+    else { cdBig.textContent = "Passed"; cdDet.textContent = plural(Math.abs(c.daysLeft), "day") + " ago. Update the departure date."; }
+    var src = $("cd-src"); src.textContent = "";
+    if (parseISO(state.todayOverride)) {
+      src.appendChild(document.createTextNode("Using the date you set. "));
+      var ub = document.createElement("button"); ub.type = "button"; ub.className = "linkbtn"; ub.textContent = "Use device clock";
+      ub.addEventListener("click", function () { state.todayOverride = ""; syncInputs(true); persist(); render(); });
+      src.appendChild(ub);
+    } else { src.textContent = "Using your device clock"; }
+
+    // pace stats
+    $("wleft").textContent = c.weeksLeft > 0 ? Math.round(c.weeksLeft) : "–";
+    var needWk = c.weeksLeft > 0 ? c.remaining / c.weeksLeft : null;
+    $("needwk").textContent = needWk !== null ? fmt(needWk) : "–";
+    $("needmo").textContent = needWk !== null ? fmt(needWk * 52 / 12) : "–";
+    $("avgwk").textContent = c.avg !== null ? fmt(c.avg) : "–";
+    var projDate = "–", projSave = "–";
+    if (c.remaining === 0) { projDate = "Done"; }
+    else if (c.avg !== null && c.avg > 0) {
+      var wks = c.remaining / c.avg;
+      projDate = fmtDate(addDays(c.today, Math.round(wks * 7)));
+    }
+    if (c.avg !== null && c.weeksLeft > 0) projSave = fmt(c.saved + c.avg * c.weeksLeft);
+    $("projdate").textContent = projDate;
+    $("projsave").textContent = projSave;
+
+    // status
+    var st = $("status"); st.className = "status";
+    var msg = "";
+    if (c.remaining === 0) {
+      msg = "Target reached. Anything extra you add is a buffer.";
+    } else if (c.dep === null) {
+      msg = "Set a departure date to see your pace."; st.classList.add("warn");
+    } else if (c.daysLeft <= 0) {
+      msg = "That departure date has passed. Update it in Your target."; st.classList.add("bad");
+    } else if (c.avg === null) {
+      msg = "You need about " + fmt(needWk) + " a week to finish by " + fmtDate(c.dep) + ".";
+      if (state.deposits.length === 0) msg += " Add your first deposit to start tracking.";
+      else msg += " Keep adding deposits for a few weeks and I'll show your real pace.";
+    } else {
+      var proj = c.saved + c.avg * c.weeksLeft;
+      if (proj >= c.target) {
+        msg = "On track. At your current pace you'd have about " + fmt(proj) + " by departure, " + fmt(proj - c.target) + " more than you need.";
+      } else {
+        msg = "Behind. At your current pace you'd be about " + fmt(c.target - proj) + " short. To catch up, save about " + fmt(needWk) + " a week.";
+        st.classList.add("warn");
+      }
+    }
+    st.textContent = msg;
+    $("pacehint").textContent = c.avg === null && state.deposits.length
+      ? "Your average shows once your first deposit is at least four weeks old." : "";
+
+    // formula
+    $("formula").textContent = fmt(num(state.blockCost)) + " trip + " + fmt(num(state.gear)) + " gear - " + fmt(num(state.dad)) + " from dad = " + fmt(c.target) + " for you to save.";
+
+    // plans
+    var tb = $("plans"); tb.textContent = "";
+    var opts = [12, 18, 24, 36];
+    opts.forEach(function (m) { addPlanRow(tb, m + " months", c.remaining / (m * 52 / 12), c.remaining / m); });
+    if (c.weeksLeft > 0) {
+      var mLeft = c.weeksLeft * 12 / 52;
+      addPlanRow(tb, "Until departure (" + (mLeft < 10 ? mLeft.toFixed(1) : Math.round(mLeft)) + " months)", c.remaining / c.weeksLeft, c.remaining / mLeft);
+    }
+
+    renderDeposits();
+    renderMiles(c);
+    syncScenario();
+  }
+
+  function addPlanRow(tb, label, wk, mo) {
+    var tr = document.createElement("tr");
+    var a = document.createElement("td"); a.textContent = label;
+    var b = document.createElement("td"); b.className = "num"; b.textContent = fmt(wk);
+    var d = document.createElement("td"); d.className = "num"; d.textContent = fmt(mo);
+    tr.appendChild(a); tr.appendChild(b); tr.appendChild(d); tb.appendChild(tr);
+  }
+
+  function renderDeposits() {
+    var ul = $("deposits"); ul.textContent = "";
+    if (!state.deposits.length) {
+      var li = document.createElement("li"); li.className = "empty"; li.textContent = "No deposits yet. Add your first one above."; ul.appendChild(li); return;
+    }
+    var sorted = state.deposits.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    sorted.forEach(function (d) {
+      var li = document.createElement("li");
+      var dd = parseISO(d.date);
+      var s1 = document.createElement("span"); s1.className = "d"; s1.textContent = dd ? fmtDate(dd) : d.date;
+      var s2 = document.createElement("span"); s2.className = "n"; s2.textContent = d.note || "";
+      var s3 = document.createElement("span"); s3.className = "a"; s3.textContent = fmt(num(d.amount));
+      var btn = document.createElement("button"); btn.type = "button"; btn.className = "ghost";
+      var armed = pendingDel === d.id;
+      btn.textContent = armed ? "Sure?" : "Remove";
+      if (armed) btn.classList.add("arm");
+      btn.setAttribute("aria-label", "Remove deposit of " + fmt(num(d.amount)));
+      btn.addEventListener("click", function () { onDelete(d.id); });
+      li.appendChild(s1); li.appendChild(s2); li.appendChild(s3); li.appendChild(btn);
+      ul.appendChild(li);
+    });
+  }
+
+  function onDelete(id) {
+    if (pendingDel === id) {
+      state.deposits = state.deposits.filter(function (d) { return d.id !== id; });
+      pendingDel = null; clearTimeout(delTimer);
+      persist(); render();
+    } else {
+      pendingDel = id; clearTimeout(delTimer);
+      delTimer = setTimeout(function () { pendingDel = null; renderDeposits(); }, 3500);
+      renderDeposits();
+    }
+  }
+
+  function renderMiles(c) {
+    var tb = $("miles"); tb.textContent = "";
+    var available = c.saved + Math.max(0, num(state.dad) - num(state.reserve));
+    var items = MILESTONES.slice().sort(function (a, b) { return b.mb - a.mb; });
+    var run = 0;
+    items.forEach(function (m) {
+      run += m.amt;
+      var due = c.dep ? addDays(c.dep, -Math.round(m.mb * 30.44)) : null;
+      var tr = document.createElement("tr");
+      var a = document.createElement("td"); a.textContent = m.name;
+      var b = document.createElement("td"); b.textContent = due ? fmtDate(due) : "Set a date";
+      var d = document.createElement("td"); d.className = "num"; d.textContent = fmt(m.amt);
+      var e = document.createElement("td"); e.className = "num"; e.textContent = fmt(run);
+      var f = document.createElement("td");
+      var tag = document.createElement("span"); tag.className = "tag";
+      if (available >= run) { tag.textContent = "Covered"; }
+      else if (due && due < c.today) { tag.textContent = "Overdue"; tag.classList.add("bad"); }
+      else { tag.textContent = "Not yet"; tag.classList.add("warn"); }
+      f.appendChild(tag);
+      tr.appendChild(a); tr.appendChild(b); tr.appendChild(d); tr.appendChild(e); tr.appendChild(f);
+      tb.appendChild(tr);
+    });
+    $("milehint").textContent = "About " + fmt(run) + " is paid before you leave. The rest of the " + fmt(num(state.blockCost)) +
+      " (accommodation, food, local transport) is paid as you go, and the emergency reserve stays untouched. Available for bookings now: " + fmt(available) + ".";
+  }
+
+  function syncScenario() {
+    var btns = $("scen").querySelectorAll("button");
+    Array.prototype.forEach.call(btns, function (b) { b.classList.toggle("on", b.getAttribute("data-s") === state.scenario); });
+  }
+
+  function syncInputs(force) {
+    var map = { cost: "blockCost", gear: "gear", dad: "dad", reserve: "reserve" };
+    Object.keys(map).forEach(function (id) {
+      var el = $(id);
+      if (force || document.activeElement !== el) el.value = state[map[id]];
+    });
+    if (force || document.activeElement !== $("dep")) $("dep").value = state.departure || "";
+    if (force || document.activeElement !== $("todayov")) $("todayov").value = state.todayOverride || "";
+  }
+
+  /* ---------- events ---------- */
+  function wire() {
+    ["cost", "gear", "dad", "reserve"].forEach(function (id) {
+      $(id).addEventListener("input", function () {
+        var key = { cost: "blockCost", gear: "gear", dad: "dad", reserve: "reserve" }[id];
+        state[key] = Math.max(0, num(this.value));
+        if (id === "cost") state.scenario = "custom";
+        persist(); render();
+      });
+    });
+    $("dep").addEventListener("input", function () { state.departure = this.value; persist(); render(); });
+    $("todayov").addEventListener("input", function () { state.todayOverride = this.value; persist(); render(); });
+
+    Array.prototype.forEach.call($("scen").querySelectorAll("button"), function (b) {
+      b.addEventListener("click", function () {
+        var s = b.getAttribute("data-s");
+        state.scenario = s; state.blockCost = COSTS[s];
+        syncInputs(true); persist(); render();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (b) {
+      b.addEventListener("click", function () {
+        $("amt").value = String(num($("amt").value) + num(b.getAttribute("data-q")));
+      });
+    });
+
+    function addDeposit() {
+      var amount = num($("amt").value);
+      var err = $("adderr"); err.textContent = "";
+      if (!(amount > 0)) { err.textContent = "Enter an amount above zero."; return; }
+      var date = $("ddate").value || toISO(getToday());
+      state.deposits.push({ id: uid(), date: date, amount: amount, note: $("dnote").value.trim().slice(0, 80) });
+      $("amt").value = ""; $("dnote").value = "";
+      persist(); render();
+    }
+    $("add").addEventListener("click", addDeposit);
+    ["amt", "dnote"].forEach(function (id) {
+      $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addDeposit(); } });
+    });
+
+    var armed = false, armTimer = null;
+    $("reset").addEventListener("click", function () {
+      var b = this;
+      if (!armed) {
+        armed = true; b.textContent = "Tap again to erase all data"; b.classList.add("arm");
+        armTimer = setTimeout(function () { armed = false; b.textContent = "Reset everything"; b.classList.remove("arm"); }, 3500);
+      } else {
+        clearTimeout(armTimer); armed = false; b.textContent = "Reset everything"; b.classList.remove("arm");
+        state = clone(DEFAULTS); syncInputs(true); persist(); render();
+      }
+    });
+  }
+
+  /* ---------- start ---------- */
+  var saved = localLoad();
+  if (saved) state = merge(DEFAULTS, saved);
+  $("ddate").value = toISO(getToday());
+  syncInputs(true);
+  wire();
+  render();
+  attachDb();
+})();
+</script>
+</body>
+</html>
